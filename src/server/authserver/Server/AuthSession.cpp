@@ -31,82 +31,10 @@
 #include "Util.h"
 #include <boost/lexical_cast.hpp>
 #include <openssl/crypto.h>
+#include <openssl/md5.h>
+#include "PatchMgr.h"
 
 using boost::asio::ip::tcp;
-
-enum eAuthCmd
-{
-    AUTH_LOGON_CHALLENGE = 0x00,
-    AUTH_LOGON_PROOF = 0x01,
-    AUTH_RECONNECT_CHALLENGE = 0x02,
-    AUTH_RECONNECT_PROOF = 0x03,
-    REALM_LIST = 0x10,
-    XFER_INITIATE = 0x30,
-    XFER_DATA = 0x31,
-    XFER_ACCEPT = 0x32,
-    XFER_RESUME = 0x33,
-    XFER_CANCEL = 0x34
-};
-
-#pragma pack(push, 1)
-
-typedef struct AUTH_LOGON_CHALLENGE_C
-{
-    uint8   cmd;
-    uint8   error;
-    uint16  size;
-    uint8   gamename[4];
-    uint8   version1;
-    uint8   version2;
-    uint8   version3;
-    uint16  build;
-    uint8   platform[4];
-    uint8   os[4];
-    uint8   country[4];
-    uint32  timezone_bias;
-    uint32  ip;
-    uint8   I_len;
-    uint8   I[1];
-} sAuthLogonChallenge_C;
-
-typedef struct AUTH_LOGON_PROOF_C
-{
-    uint8   cmd;
-    uint8   A[32];
-    uint8   M1[20];
-    uint8   crc_hash[20];
-    uint8   number_of_keys;
-    uint8   securityFlags;
-} sAuthLogonProof_C;
-
-typedef struct AUTH_LOGON_PROOF_S
-{
-    uint8   cmd;
-    uint8   error;
-    uint8   M2[20];
-    uint32  AccountFlags;
-    uint32  SurveyId;
-    uint16  LoginFlags;
-} sAuthLogonProof_S;
-
-typedef struct AUTH_LOGON_PROOF_S_OLD
-{
-    uint8   cmd;
-    uint8   error;
-    uint8   M2[20];
-    uint32  unk2;
-} sAuthLogonProof_S_Old;
-
-typedef struct AUTH_RECONNECT_PROOF_C
-{
-    uint8   cmd;
-    uint8   R1[16];
-    uint8   R2[20];
-    uint8   R3[20];
-    uint8   number_of_keys;
-} sAuthReconnectProof_C;
-
-#pragma pack(pop)
 
 std::array<uint8, 16> VersionChallenge = { { 0xBA, 0xA3, 0x1E, 0x99, 0xA0, 0x0B, 0x21, 0x57, 0xFC, 0x37, 0x3F, 0xB3, 0x69, 0xCD, 0xD2, 0xF1 } };
 
@@ -120,6 +48,9 @@ enum class BufferSizes : uint32
 
 #define AUTH_LOGON_CHALLENGE_INITIAL_SIZE 4
 #define REALM_LIST_PACKET_SIZE 5
+#define XFER_ACCEPT_SIZE 1
+#define XFER_RESUME_SIZE 9
+#define XFER_CANCEL_SIZE 1
 
 std::unordered_map<uint8, AuthHandler> AuthSession::InitHandlers()
 {
@@ -130,6 +61,9 @@ std::unordered_map<uint8, AuthHandler> AuthSession::InitHandlers()
     handlers[AUTH_RECONNECT_CHALLENGE] = { STATUS_CHALLENGE, AUTH_LOGON_CHALLENGE_INITIAL_SIZE, &AuthSession::HandleReconnectChallenge };
     handlers[AUTH_RECONNECT_PROOF]     = { STATUS_RECONNECT_PROOF, sizeof(AUTH_RECONNECT_PROOF_C),    &AuthSession::HandleReconnectProof };
     handlers[REALM_LIST]               = { STATUS_AUTHED,    REALM_LIST_PACKET_SIZE,            &AuthSession::HandleRealmList };
+    handlers[XFER_ACCEPT]              = { STATUS_CLOSED,    XFER_ACCEPT_SIZE,                  &AuthSession::HandleXferAccept };
+    handlers[XFER_RESUME]              = { STATUS_CLOSED,    XFER_RESUME_SIZE,                  &AuthSession::HandleXferResume };
+    handlers[XFER_CANCEL]              = { STATUS_CLOSED,    XFER_CANCEL_SIZE,                  &AuthSession::HandleXferCancel };
 
     return handlers;
 }
@@ -161,10 +95,16 @@ void AccountInfo::LoadResult(Field* fields)
 }
 
 AuthSession::AuthSession(tcp::socket&& socket) : Socket(std::move(socket)),
-_status(STATUS_CHALLENGE), _build(0), _expversion(0)
+_status(STATUS_CHALLENGE), _build(0), _expversion(0), _patcher(nullptr)
 {
     N.SetHexStr("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7");
     g.SetDword(7);
+}
+
+AuthSession::~AuthSession() {
+    if (_patcher) {
+        delete _patcher;
+    }
 }
 
 void AuthSession::Start()
@@ -426,7 +366,7 @@ void AuthSession::LogonChallengeCallback(PreparedQueryResult result)
     ASSERT(gmod.GetNumBytes() <= 32);
 
     // Fill the response packet with the result
-    if (AuthHelper::IsAcceptedClientBuild(_build))
+    if (AuthHelper::IsAcceptedClientBuild(_build) || sPatcher->CanPatch(_build, _localizationName))
     {
         pkt << uint8(WOW_SUCCESS);
 
@@ -463,9 +403,10 @@ void AuthSession::LogonChallengeCallback(PreparedQueryResult result)
 
         _status = STATUS_LOGON_PROOF;
     }
-    else
+    else {
         pkt << uint8(WOW_FAIL_VERSION_INVALID);
-
+    }
+  
     SendPacket(pkt);
 }
 
@@ -481,8 +422,12 @@ bool AuthSession::HandleLogonProof()
     // If the client has no valid version
     if (_expversion == NO_VALID_EXP_FLAG)
     {
-        // Check if we have the appropriate patch on the disk
-        TC_LOG_DEBUG("network", "Client with invalid version, patching is not implemented");
+        TC_LOG_INFO("patcher", "User has no valid version. Attempting patching...");
+        if (sPatcher->CanPatch(_build, _localizationName)) {
+            sPatcher->Patch(_build, this);
+            return true;
+        }
+        TC_LOG_INFO("patcher", "Patching failed for user! Build: %d", _build);
         return false;
     }
 
@@ -923,6 +868,34 @@ void AuthSession::RealmListCallback(PreparedQueryResult result)
     SendPacket(hdr);
 
     _status = STATUS_AUTHED;
+}
+
+// Resume patch transfer
+bool AuthSession::HandleXferResume()
+{
+    TC_LOG_DEBUG("server.authserver", "Entering _HandleXferResume");
+    return true;
+}
+
+// Cancel patch transfer
+bool AuthSession::HandleXferCancel()
+{
+    TC_LOG_DEBUG("server.authserver", "Entering _HandleXferCancel");
+    if (_patcher)
+        _patcher->Stop();
+    return false;
+}
+
+// Accept patch transfer
+bool AuthSession::HandleXferAccept()
+{
+    TC_LOG_INFO("patcher", "Entering _HandleXferAccept");
+    if (!_patcher) {
+        TC_LOG_INFO("patcher", "No patcher for user!");
+        return false;
+    }
+    _patcher->Init();
+    return true;
 }
 
 // Make the SRP6 calculation from hash in dB
