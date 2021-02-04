@@ -92,12 +92,12 @@ bool PatchMgr::CanPatch(uint16 Build, std::string Locale) {
 bool PatchMgr::Patch(uint16 Build, AuthSession* Session) {
     PatchInfo* Patch = Patches.find(Build)->second;
     ByteBuffer pkt;
-    pkt << uint8(AUTH_LOGON_PROOF);
+    pkt << uint8(0x01); // AUTH_LOGON_PROOF
     pkt << uint8(LOGIN_DOWNLOAD_FILE);
     Session->SendPacket(pkt);
 
     sXferInit_C Xfer;
-    Xfer.cmd = XFER_INITIATE;
+    Xfer.cmd = 0x30; // XFER_INITIATE
     Xfer.nameLength = 5;
     Xfer.fileName[0] = 'P';
     Xfer.fileName[1] = 'a';

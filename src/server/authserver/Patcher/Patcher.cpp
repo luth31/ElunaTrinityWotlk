@@ -25,7 +25,7 @@ void Patcher::Init(uint64 start_pos) {
         ByteBuffer pkt;
         char* bytes = new char[chunkSize];
         TransferDataPacket hdr;
-        hdr.cmd = XFER_DATA;
+        hdr.cmd = 0x31; // XFER_DATA
         hdr.chunk_size = chunkSize;
         file.read(bytes, chunkSize);
         pkt.append(&hdr, 1); 

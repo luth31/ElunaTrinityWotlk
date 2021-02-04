@@ -169,7 +169,7 @@ void AccountInfo::LoadResult(Field* fields)
 }
 
 AuthSession::AuthSession(tcp::socket&& socket) : Socket(std::move(socket)),
-_status(STATUS_CHALLENGE), _build(0), _expversion(0), _patcher(nullptr)
+_status(STATUS_CHALLENGE), _build(0), _expversion(0), _patcher(nullptr) { }
 
 AuthSession::~AuthSession() {
     if (_patcher) {
