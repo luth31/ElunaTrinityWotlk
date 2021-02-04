@@ -79,7 +79,7 @@ public:
 
     struct instance_blackwing_lair_InstanceMapScript : public InstanceScript
     {
-        instance_blackwing_lair_InstanceMapScript(Map* map) : InstanceScript(map)
+        instance_blackwing_lair_InstanceMapScript(InstanceMap* map) : InstanceScript(map)
         {
             SetHeaders(DataHeader);
             SetBossNumber(EncounterCount);
@@ -102,7 +102,8 @@ public:
                 case NPC_BLACKWING_LEGIONAIRE:
                 case NPC_BLACKWING_WARLOCK:
                     if (Creature* razor = GetCreature(DATA_RAZORGORE_THE_UNTAMED))
-                        razor->AI()->JustSummoned(creature);
+                        if (CreatureAI* razorAI = razor->AI())
+                            razorAI->JustSummoned(creature);
                     break;
                 default:
                     break;
@@ -113,13 +114,13 @@ public:
         {
             InstanceScript::OnGameObjectCreate(go);
 
-            switch(go->GetEntry()) 
+            switch(go->GetEntry())
             {
                 case GO_BLACK_DRAGON_EGG:
                     if (GetBossState(DATA_FIREMAW) == DONE)
                         go->SetPhaseMask(2, true);
                     else
-                        EggList.push_back(go->GetGUID());                   
+                        EggList.push_back(go->GetGUID());
                     break;
                 default:
                     break;
@@ -188,7 +189,7 @@ public:
                                 nefarian->DespawnOrUnsummon();
                             break;
                         case FAIL:
-                            _events.ScheduleEvent(EVENT_RESPAWN_NEFARIUS, 15 * IN_MILLISECONDS * MINUTE);
+                            _events.ScheduleEvent(EVENT_RESPAWN_NEFARIUS, 15min);
                             SetBossState(DATA_NEFARIAN, NOT_STARTED);
                             break;
                         default:

@@ -80,6 +80,11 @@ enum HunterSpells
     SPELL_HUNTER_WYVERN_STING_DOT_R6                = 49010
 };
 
+enum HunterSpellIcons
+{
+    SPELL_ICON_HUNTER_PET_IMPROVED_COWER            = 958
+};
+
 // 13161 - Aspect of the Beast
 class spell_hun_aspect_of_the_beast : public SpellScriptLoader
 {
@@ -960,6 +965,23 @@ class spell_hun_misdirection_proc : public SpellScriptLoader
         }
 };
 
+// 1742 - Pet Cower
+class spell_hun_pet_cower : public AuraScript
+{
+    PrepareAuraScript(spell_hun_pet_cower);
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        if (AuraEffect const* improvedCower = GetUnitOwner()->GetDummyAuraEffect(SPELLFAMILY_PET, SPELL_ICON_HUNTER_PET_IMPROVED_COWER, EFFECT_0))
+            AddPct(amount, improvedCower->GetAmount());
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_hun_pet_cower::CalculateAmount, EFFECT_1, SPELL_AURA_MOD_DECREASE_SPEED);
+    }
+};
+
 // 54044 - Pet Carrion Feeder
 class spell_hun_pet_carrion_feeder : public SpellScriptLoader
 {
@@ -1415,8 +1437,8 @@ class spell_hun_tame_beast : public SpellScriptLoader
 
             SpellCastResult CheckCast()
             {
-                Unit* caster = GetCaster();
-                if (caster->GetTypeId() != TYPEID_PLAYER)
+                Player* caster = GetCaster()->ToPlayer();
+                if (!caster)
                     return SPELL_FAILED_DONT_REPORT;
 
                 if (!GetExplTargetUnit())
@@ -1428,11 +1450,21 @@ class spell_hun_tame_beast : public SpellScriptLoader
                         return SPELL_FAILED_HIGHLEVEL;
 
                     // use SMSG_PET_TAME_FAILURE?
-                    if (!target->GetCreatureTemplate()->IsTameable(caster->ToPlayer()->CanTameExoticPets()))
+                    if (!target->GetCreatureTemplate()->IsTameable(caster->CanTameExoticPets()))
                         return SPELL_FAILED_BAD_TARGETS;
 
-                    if (caster->GetPetGUID())
-                        return SPELL_FAILED_ALREADY_HAVE_SUMMON;
+                    PetStable const* petStable = caster->GetPetStable();
+                    if (petStable)
+                    {
+                        if (petStable->CurrentPet)
+                            return SPELL_FAILED_ALREADY_HAVE_SUMMON;
+
+                        if (petStable->GetUnslottedHunterPet())
+                        {
+                            caster->SendTameFailure(PETTAME_TOOMANY);
+                            return SPELL_FAILED_DONT_REPORT;
+                        }
+                    }
 
                     if (caster->GetCharmedGUID())
                         return SPELL_FAILED_ALREADY_HAVE_CHARM;
@@ -1669,7 +1701,7 @@ class spell_hun_wyvern_sting : public AuraScript
 void AddSC_hunter_spell_scripts()
 {
     new spell_hun_aspect_of_the_beast();
-    RegisterAuraScript(spell_hun_aspect_of_the_beast_pet);
+    RegisterSpellScript(spell_hun_aspect_of_the_beast_pet);
     new spell_hun_ascpect_of_the_viper();
     new spell_hun_chimera_shot();
     new spell_hun_cobra_strikes();
@@ -1677,8 +1709,8 @@ void AddSC_hunter_spell_scripts()
     new spell_hun_disengage();
     new spell_hun_glyph_of_arcane_shot();
     new spell_hun_glyph_of_mend_pet();
-    RegisterAuraScript(spell_hun_explosive_shot);
-    RegisterAuraScript(spell_hun_feeding_frenzy);
+    RegisterSpellScript(spell_hun_explosive_shot);
+    RegisterSpellScript(spell_hun_feeding_frenzy);
     new spell_hun_hunting_party();
     new spell_hun_improved_mend_pet();
     new spell_hun_invigoration();
@@ -1688,6 +1720,7 @@ void AddSC_hunter_spell_scripts()
     new spell_hun_masters_call();
     new spell_hun_misdirection();
     new spell_hun_misdirection_proc();
+    RegisterSpellScript(spell_hun_pet_cower);
     new spell_hun_pet_carrion_feeder();
     new spell_hun_pet_heart_of_the_phoenix();
     new spell_hun_piercing_shots();
@@ -1702,5 +1735,5 @@ void AddSC_hunter_spell_scripts()
     new spell_hun_thrill_of_the_hunt();
     new spell_hun_t9_4p_bonus();
     new spell_hun_viper_attack_speed();
-    RegisterAuraScript(spell_hun_wyvern_sting);
+    RegisterSpellScript(spell_hun_wyvern_sting);
 }

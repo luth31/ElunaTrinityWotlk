@@ -50,12 +50,10 @@ class npc_pet_shaman_earth_elemental : public CreatureScript
         {
             npc_pet_shaman_earth_elementalAI(Creature* creature) : ScriptedAI(creature) { }
 
-
             void Reset() override
             {
                 _events.Reset();
-                _events.ScheduleEvent(EVENT_SHAMAN_ANGEREDEARTH, 0);
-                me->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_MASK_NATURE, true);
+                _events.ScheduleEvent(EVENT_SHAMAN_ANGEREDEARTH, 0s);
             }
 
             void UpdateAI(uint32 diff) override
@@ -98,8 +96,7 @@ class npc_pet_shaman_fire_elemental : public CreatureScript
                 _events.Reset();
                 _events.ScheduleEvent(EVENT_SHAMAN_FIRENOVA, 5s, 20s);
                 _events.ScheduleEvent(EVENT_SHAMAN_FIREBLAST, 5s, 20s);
-                _events.ScheduleEvent(EVENT_SHAMAN_FIRESHIELD, 0);
-                me->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_MASK_FIRE, true);
+                _events.ScheduleEvent(EVENT_SHAMAN_FIRESHIELD, 0s);
             }
 
             void UpdateAI(uint32 diff) override

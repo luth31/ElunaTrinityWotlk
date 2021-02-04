@@ -198,7 +198,6 @@ static float const MIDDLE_OF_ROOM    = 400.0f;
 static float const FACE_THE_DOOR     = 0.08726646f;
 static float const FACE_THE_PLATFORM = 3.118662f;
 
-
 struct boss_shade_of_akama : public BossAI
 {
     boss_shade_of_akama(Creature* creature) : BossAI(creature, DATA_SHADE_OF_AKAMA)
@@ -236,9 +235,9 @@ struct boss_shade_of_akama : public BossAI
         _DespawnAtEvade();
     }
 
-    void SpellHit(Unit* /*caster*/, SpellInfo const* spell) override
+    void SpellHit(WorldObject* /*caster*/, SpellInfo const* spellInfo) override
     {
-        if (spell->Id == SPELL_AKAMA_SOUL_CHANNEL)
+        if (spellInfo->Id == SPELL_AKAMA_SOUL_CHANNEL)
         {
             events.ScheduleEvent(EVENT_START_CHANNELERS_AND_SPAWNERS, 1s);
             me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_NONE);
@@ -247,7 +246,7 @@ struct boss_shade_of_akama : public BossAI
                 AttackStart(akama);
         }
 
-        if (spell->Id == SPELL_AKAMA_SOUL_RETRIEVE)
+        if (spellInfo->Id == SPELL_AKAMA_SOUL_RETRIEVE)
             DoCastSelf(SPELL_AKAMA_SOUL_EXPEL_CHANNEL);
     }
 
@@ -381,9 +380,9 @@ struct npc_akama_shade : public ScriptedAI
 
     void EnterEvadeMode(EvadeReason /*why*/) override { }
 
-    void SpellHit(Unit* /*caster*/, SpellInfo const* spell) override
+    void SpellHit(WorldObject* /*caster*/, SpellInfo const* spellInfo) override
     {
-        if (spell->Id == SPELL_THREAT && !_isInCombat)
+        if (spellInfo->Id == SPELL_THREAT && !_isInCombat)
         {
             _isInCombat = true;
             me->SetWalk(false);
@@ -533,7 +532,7 @@ struct npc_akama_shade : public ScriptedAI
                 shade->AI()->EnterEvadeMode(EVADE_REASON_OTHER);
     }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
+    bool OnGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
     {
         if (gossipListId == 0)
         {
@@ -794,7 +793,6 @@ struct npc_ashtongue_defender : public ScriptedAI
         _events.ScheduleEvent(EVENT_DEBILITATING_STRIKE, 10s, 16s);
         _events.ScheduleEvent(EVENT_WINDFURY, 8s, 12s);
     }
-
 
     void UpdateAI(uint32 diff) override
     {
@@ -1133,6 +1131,6 @@ void AddSC_boss_shade_of_akama()
     RegisterBlackTempleCreatureAI(npc_ashtongue_elementalist);
     RegisterBlackTempleCreatureAI(npc_ashtongue_spiritbinder);
     RegisterBlackTempleCreatureAI(npc_ashtongue_broken);
-    RegisterAuraScript(spell_shade_soul_channel_serverside);
-    RegisterAuraScript(spell_shade_soul_channel);
+    RegisterSpellScript(spell_shade_soul_channel_serverside);
+    RegisterSpellScript(spell_shade_soul_channel);
 }

@@ -29,6 +29,7 @@ enum Spells
     SPELL_MUTATING_EXPLOSION    = 28206,
     SPELL_POISON_CLOUD          = 28240,
     SPELL_POISON_CLOUD_PASSIVE  = 28158,
+    SPELL_PACIFY_SELF           = 19951,
     SPELL_BERSERK               = 26662
 };
 
@@ -63,9 +64,9 @@ class boss_grobbulus : public CreatureScript
                 events.ScheduleEvent(EVENT_BERSERK, 12min);
             }
 
-            void SpellHitTarget(Unit* target, SpellInfo const* spell) override
+            void SpellHitTarget(WorldObject* target, SpellInfo const* spellInfo) override
             {
-                if (spell->Id == SPELL_SLIME_SPRAY)
+                if (spellInfo->Id == SPELL_SLIME_SPRAY)
                     me->SummonCreature(NPC_FALLOUT_SLIME, *target, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT);
             }
 
@@ -92,7 +93,7 @@ class boss_grobbulus : public CreatureScript
                             events.Repeat(randtime(Seconds(15), Seconds(30)));
                             return;
                         case EVENT_INJECT:
-                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, true, -SPELL_MUTATING_INJECTION))
+                            if (Unit* target = SelectTarget(SelectTargetMethod::Random, 1, 0.0f, true, true, -SPELL_MUTATING_INJECTION))
                                 DoCast(target, SPELL_MUTATING_INJECTION);
                             events.Repeat(Seconds(8) + Milliseconds(uint32(std::round(120 * me->GetHealthPct()))));
                             return;
@@ -128,6 +129,7 @@ class npc_grobbulus_poison_cloud : public CreatureScript
             {
                 // no visual when casting in ctor or Reset()
                 DoCast(me, SPELL_POISON_CLOUD_PASSIVE, true);
+                DoCast(me, SPELL_PACIFY_SELF, true);
             }
 
             void UpdateAI(uint32 /*diff*/) override { }

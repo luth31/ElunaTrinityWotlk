@@ -18,6 +18,7 @@
 #ifndef TRINITY_SHAREDDEFINES_H
 #define TRINITY_SHAREDDEFINES_H
 
+#include "DBCEnums.h"
 #include "Define.h"
 #include "DetourNavMesh.h"
 #include "SmartEnum.h"
@@ -67,7 +68,7 @@ inline uint32 GetMaxLevelForExpansion(uint32 expansion)
         default:
             break;
     }
-    return 0;
+    return DEFAULT_MAX_LEVEL;
 }
 
 enum Gender
@@ -449,7 +450,7 @@ enum SpellAttr1 : uint32
     SPELL_ATTR1_CANT_TARGET_IN_COMBAT            = 0x00000100, // TITLE Target cannot be in combat
     SPELL_ATTR1_MELEE_COMBAT_START               = 0x00000200, // TITLE Starts auto-attack (client only) DESCRIPTION Caster will begin auto-attacking the target on cast
     SPELL_ATTR1_NO_THREAT                        = 0x00000400, // TITLE Does not generate threat DESCRIPTION Also does not cause target to engage
-    SPELL_ATTR1_UNK11                            = 0x00000800, // TITLE Unknown attribute 11@Attr1 DESCRIPTION Aura?
+    SPELL_ATTR1_DONT_REFRESH_DURATION_ON_RECAST  = 0x00000800, // TITLE Aura will not refresh its duration when recast
     SPELL_ATTR1_IS_PICKPOCKET                    = 0x00001000, // TITLE Pickpocket (client only)
     SPELL_ATTR1_FARSIGHT                         = 0x00002000, // TITLE Farsight aura (client only)
     SPELL_ATTR1_CHANNEL_TRACK_TARGET             = 0x00004000, // TITLE Track target while channeling DESCRIPTION While channeling, adjust facing to face target
@@ -570,7 +571,7 @@ enum SpellAttr4 : uint32
     SPELL_ATTR4_AREA_TARGET_CHAIN                = 0x00040000, // TITLE Chain area targets DESCRIPTION [NYI] Hits area targets over time instead of all at once
     SPELL_ATTR4_UNK19                            = 0x00080000, // TITLE Unknown attribute 19@Attr4
     SPELL_ATTR4_NOT_CHECK_SELFCAST_POWER         = 0x00100000, // TITLE Allow self-cast to override stronger aura (client only)
-    SPELL_ATTR4_UNK21                            = 0x00200000, // TITLE Keep when entering arena
+    SPELL_ATTR4_DONT_REMOVE_IN_ARENA             = 0x00200000, // TITLE Keep when entering arena
     SPELL_ATTR4_UNK22                            = 0x00400000, // TITLE Unknown attribute 22@Attr4
     SPELL_ATTR4_CANT_TRIGGER_ITEM_SPELLS         = 0x00800000, // TITLE Cannot trigger item spells
     SPELL_ATTR4_UNK24                            = 0x01000000, // TITLE Unknown attribute 24@Attr4 DESCRIPTION Shoot-type spell?
@@ -594,13 +595,13 @@ enum SpellAttr5 : uint32
     SPELL_ATTR5_SINGLE_TARGET_SPELL              = 0x00000020, // TITLE Single-target aura DESCRIPTION Remove previous application to another unit if applied
     SPELL_ATTR5_UNK6                             = 0x00000040, // TITLE Unknown attribute 6@Attr5
     SPELL_ATTR5_UNK7                             = 0x00000080, // TITLE Unknown attribute 7@Attr5
-    SPELL_ATTR5_UNK8                             = 0x00000100, // TITLE Unknown attribute 8@Attr5
+    SPELL_ATTR5_CANT_TARGET_PLAYER_CONTROLLED    = 0x00000100, // TITLE Cannot target player controlled units but can target players
     SPELL_ATTR5_START_PERIODIC_AT_APPLY          = 0x00000200, // TITLE Immediately do periodic tick on apply
     SPELL_ATTR5_HIDE_DURATION                    = 0x00000400, // TITLE Do not send aura duration to client
     SPELL_ATTR5_ALLOW_TARGET_OF_TARGET_AS_TARGET = 0x00000800, // TITLE Auto-target target of target (client only)
     SPELL_ATTR5_UNK12                            = 0x00001000, // TITLE Unknown attribute 12@Attr5 DESCRIPTION Cleave related?
     SPELL_ATTR5_HASTE_AFFECT_DURATION            = 0x00002000, // TITLE Duration scales with Haste Rating
-    SPELL_ATTR5_UNK14                            = 0x00004000, // TITLE Unknown attribute 14@Attr5
+    SPELL_ATTR5_NOT_USABLE_WHILE_CHARMED         = 0x00004000, // TITLE Charmed units cannot cast this spell
     SPELL_ATTR5_UNK15                            = 0x00008000, // TITLE Unknown attribute 15@Attr5 DESCRIPTION Related to multi-target spells?
     SPELL_ATTR5_UNK16                            = 0x00010000, // TITLE Unknown attribute 16@Attr5
     SPELL_ATTR5_USABLE_WHILE_FEARED              = 0x00020000, // TITLE Usable while feared
@@ -968,7 +969,8 @@ enum SpellEffects
     TOTAL_SPELL_EFFECTS                             = 165
 };
 
-enum SpellCastResult
+// EnumUtils: DESCRIBE THIS
+enum SpellCastResult : uint8
 {
     SPELL_FAILED_SUCCESS = 0,
     SPELL_FAILED_AFFECTING_COMBAT = 1,
@@ -1307,6 +1309,7 @@ enum GhostVisibilityType
 };
 
 // Spell aura states
+// EnumUtils: DESCRIBE THIS
 enum AuraStateType
 {   // (C) used in caster aura state     (T) used in target aura state
     // (c) used in caster aura state-not (t) used in target aura state-not
@@ -1424,15 +1427,14 @@ enum SpellImmunity
     MAX_SPELL_IMMUNITY
 };
 
-
 // target enum name consist of:
 // TARGET_[OBJECT_TYPE]_[REFERENCE_TYPE(skipped for caster)]_[SELECTION_TYPE(skipped for default)]_[additional specifiers(friendly, BACK_LEFT, etc.]
 enum Targets
 {
     TARGET_UNIT_CASTER                 = 1,
     TARGET_UNIT_NEARBY_ENEMY           = 2,
-    TARGET_UNIT_NEARBY_PARTY           = 3,
-    TARGET_UNIT_NEARBY_ALLY            = 4,
+    TARGET_UNIT_NEARBY_ALLY            = 3,
+    TARGET_UNIT_NEARBY_PARTY           = 4,
     TARGET_UNIT_PET                    = 5,
     TARGET_UNIT_TARGET_ENEMY           = 6,
     TARGET_UNIT_SRC_AREA_ENTRY         = 7,
@@ -1921,9 +1923,10 @@ enum TextEmotes
 };
 
 // Emotes.dbc
-enum Emote
+// EnumUtils: DESCRIBE THIS
+enum Emote : uint32
 {
-    EMOTE_ONESHOT_NONE                  = 0,
+    EMOTE_ONESHOT_NONE                  = 0, // SKIP
     EMOTE_ONESHOT_TALK                  = 1,
     EMOTE_ONESHOT_BOW                   = 2,
     EMOTE_ONESHOT_WAVE                  = 3,
@@ -3131,6 +3134,7 @@ enum CorpseDynFlags
 
 #define PLAYER_CORPSE_LOOT_ENTRY 1
 
+// EnumUtils: DESCRIBE THIS
 enum WeatherType
 {
     WEATHER_TYPE_FINE       = 0,
@@ -3143,9 +3147,10 @@ enum WeatherType
 
 #define MAX_WEATHER_TYPE 4
 
-enum ChatMsg
+// EnumUtils: DESCRIBE THIS
+enum ChatMsg : uint8
 {
-    CHAT_MSG_ADDON                  = 0xFFFFFFFF, // -1
+    CHAT_MSG_ADDON                  = 0xFF, // -1
     CHAT_MSG_SYSTEM                 = 0x00,
     CHAT_MSG_SAY                    = 0x01,
     CHAT_MSG_PARTY                  = 0x02,
@@ -3212,7 +3217,7 @@ enum ChatLinkColors : uint32
     CHAT_LINK_COLOR_GLYPH       = 0xff66bbff
 };
 
-// Values from ItemPetFood (power of (value-1) used for compare with CreatureFamilyEntry.petDietMask
+// Values from ItemPetFood (power of (value-1) used for compare with CreatureFamilyEntry.PetFoodMask
 enum PetDiet
 {
     PET_DIET_MEAT     = 1,
@@ -3455,6 +3460,13 @@ enum ResponseCodes
     CHAR_NAME_RUSSIAN_CONSECUTIVE_SILENT_CHARACTERS        = 101,
     CHAR_NAME_RUSSIAN_SILENT_CHARACTER_AT_BEGINNING_OR_END = 102,
     CHAR_NAME_DECLENSION_DOESNT_MATCH_BASE_NAME            = 103
+};
+
+enum ComplaintStatus : uint8
+{
+    COMPLAINT_DISABLED                      = 0,
+    COMPLAINT_ENABLED_WITHOUT_AUTO_IGNORE   = 1,
+    COMPLAINT_ENABLED_WITH_AUTO_IGNORE      = 2
 };
 
 /// Ban function modes
@@ -3792,6 +3804,65 @@ enum ServerProcessTypes
     SERVER_PROCESS_WORLDSERVER = 1,
 
     NUM_SERVER_PROCESS_TYPES
+};
+
+enum class MountResult : uint32
+{
+    InvalidMountee = 0,
+    TooFarAway     = 1,
+    AlreadyMounted = 2,
+    NotMountable   = 3,
+    NotYourPet     = 4,
+    Other          = 5,
+    Looting        = 6,
+    RaceCantMount  = 7,
+    Shapeshifted   = 8,
+    ForcedDismount = 9,
+    Ok             = 10 // never sent
+};
+
+enum AreaId : uint32
+{
+    AREA_WINTERGRASP                = 4197,
+    AREA_THE_SUNKEN_RING            = 4538,
+    AREA_THE_BROKEN_TEMPLATE        = 4539,
+    AREA_WINTERGRASP_FORTRESS       = 4575,
+    AREA_THE_CHILLED_QUAGMIRE       = 4589,
+    AREA_WESTPARK_WORKSHOP          = 4611,
+    AREA_EASTPARK_WORKSHOP          = 4612,
+};
+
+enum WorldState : uint32
+{
+    WS_BATTLEFIELD_WG_VEHICLE_H        = 3490,
+    WS_BATTLEFIELD_WG_MAX_VEHICLE_H    = 3491,
+    WS_BATTLEFIELD_WG_VEHICLE_A        = 3680,
+    WS_BATTLEFIELD_WG_MAX_VEHICLE_A    = 3681,
+    WS_BATTLEFIELD_WG_WORKSHOP_K_W     = 3698,
+    WS_BATTLEFIELD_WG_WORKSHOP_K_E     = 3699,
+    WS_BATTLEFIELD_WG_WORKSHOP_NW      = 3700,
+    WS_BATTLEFIELD_WG_WORKSHOP_NE      = 3701,
+    WS_BATTLEFIELD_WG_WORKSHOP_SW      = 3702,
+    WS_BATTLEFIELD_WG_WORKSHOP_SE      = 3703,
+    WS_BATTLEFIELD_WG_SHOW_WORLDSTATE  = 3710,
+    WS_BATTLEFIELD_WG_TIME_BATTLE_END  = 3781,
+    WS_BATTLEFIELD_WG_ACTIVE           = 3801,
+    WS_BATTLEFIELD_WG_DEFENDER         = 3802,
+    WS_BATTLEFIELD_WG_ATTACKER         = 3803,
+    WS_BATTLEFIELD_WG_ATTACKED_H       = 4022,
+    WS_BATTLEFIELD_WG_ATTACKED_A       = 4023,
+    WS_BATTLEFIELD_WG_DEFENDED_H       = 4024,
+    WS_BATTLEFIELD_WG_DEFENDED_A       = 4025,
+    WS_BATTLEFIELD_WG_TIME_NEXT_BATTLE = 4354,
+
+    WS_ARENA_DISTRIBUTION_TIME  = 20001,                     // Next arena distribution time
+    WS_WEEKLY_QUEST_RESET_TIME  = 20002,                     // Next weekly quest reset time
+    WS_BG_DAILY_RESET_TIME      = 20003,                     // Next daily BG reset time
+    WS_CLEANING_FLAGS           = 20004,                     // Cleaning Flags
+    WS_GUILD_DAILY_RESET_TIME   = 20006,                     // Next guild cap reset time
+    WS_MONTHLY_QUEST_RESET_TIME = 20007,                     // Next monthly quest reset time
+    WS_DAILY_QUEST_RESET_TIME   = 20008,                     // Next daily quest reset time
+    WS_DAILY_CALENDAR_DELETION_OLD_EVENTS_TIME = 20009,      // Next daily calendar deletions of old events time
 };
 
 namespace Trinity
