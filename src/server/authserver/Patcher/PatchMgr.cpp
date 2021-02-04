@@ -80,7 +80,7 @@ void PatchMgr::LoadPatches() {
     }
 }
 
-bool PatchMgr::CanPatch(uint16 Build, std::string Locale) {
+bool PatchMgr::CanPatch(uint16 Build) {
     if (!IsEnabled())
         return false;
     if (Patches.find(Build) != Patches.end()) {

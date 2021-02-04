@@ -42,7 +42,7 @@ class PatchMgr {
         void Disable() { Status = PatchingStatus::PATCHING_DISABLED; }
         void Enable() { Status = PatchingStatus::PATCHING_ENABLED; }
 
-        bool CanPatch(uint16 Build, std::string Locale);
+        bool CanPatch(uint16 Build);
         bool Patch(uint16 Build, AuthSession* Session);
         std::unordered_map<uint16, PatchInfo*> Patches;
 };

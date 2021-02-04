@@ -168,8 +168,7 @@ void AccountInfo::LoadResult(Field* fields)
     Utf8ToUpperOnlyLatin(Login);
 }
 
-AuthSession::AuthSession(tcp::socket&& socket) : Socket(std::move(socket)),
-_status(STATUS_CHALLENGE), _build(0), _expversion(0), _patcher(nullptr) { }
+AuthSession::AuthSession(tcp::socket&& socket) : Socket(std::move(socket)), _status(STATUS_CHALLENGE), _build(0), _expversion(0), _patcher(nullptr) { }
 
 AuthSession::~AuthSession() {
     if (_patcher) {
@@ -418,7 +417,7 @@ void AuthSession::LogonChallengeCallback(PreparedQueryResult result)
     );
 
     // Fill the response packet with the result
-    if (AuthHelper::IsAcceptedClientBuild(_build) || sPatcher->CanPatch(_build, _localizationName))
+    if (AuthHelper::IsAcceptedClientBuild(_build) || sPatcher->CanPatch(_build))
     {
         pkt << uint8(WOW_SUCCESS);
 
@@ -474,7 +473,7 @@ bool AuthSession::HandleLogonProof()
     if (_expversion == NO_VALID_EXP_FLAG)
     {
         TC_LOG_INFO("patcher", "User has no valid version. Attempting patching...");
-        if (sPatcher->CanPatch(_build, _localizationName)) {
+        if (sPatcher->CanPatch(_build)) {
             sPatcher->Patch(_build, this);
             return true;
         }
