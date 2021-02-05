@@ -20,8 +20,8 @@ class Patcher {
         void Init(uint64 start_pos = 0);
         void Stop();
     private:
-        bool _stopped;
         AuthSession* _session;
         PatchMgr::PatchInfo* _patch;
+        bool _stopped;
 };
 #endif
