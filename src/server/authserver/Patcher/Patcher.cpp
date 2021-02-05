@@ -1,6 +1,8 @@
 #include "AuthSession.h"
 #include "Patcher.h"
 #include "PatchMgr.h"
+#include <thread>
+#include <chrono>
 #include <fstream>
 
 #define CHUNK_SIZE 4096
@@ -34,7 +36,7 @@ void Patcher::Init(uint64 start_pos) {
         _session->SendPacket(pkt);
         delete[] bytes;
 
-        Sleep(100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     file.close();
