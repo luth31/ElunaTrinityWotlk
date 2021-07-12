@@ -644,12 +644,12 @@ struct npc_cult_fanatic : public ScriptedAI
                         DoCastSelf(SPELL_PERMANENT_FEIGN_DEATH);
                         DoCastSelf(SPELL_CLEAR_ALL_DEBUFFS);
                         DoCastSelf(SPELL_FULL_HEAL, true);
-                        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED | UNIT_FLAG_UNK_29 | UNIT_FLAG_NOT_SELECTABLE);
+                        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     })
                     .Schedule(Seconds(6), [this](TaskContext /*context*/)
                     {
                         me->RemoveAurasDueToSpell(SPELL_PERMANENT_FEIGN_DEATH);
-                        me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED | UNIT_FLAG_UNK_29 | UNIT_FLAG_NOT_SELECTABLE);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                         me->SetReactState(REACT_AGGRESSIVE);
                         DoZoneInCombat(me);
 
@@ -735,12 +735,12 @@ struct npc_cult_adherent : public ScriptedAI
                         DoCastSelf(SPELL_PERMANENT_FEIGN_DEATH);
                         DoCastSelf(SPELL_CLEAR_ALL_DEBUFFS);
                         DoCastSelf(SPELL_FULL_HEAL, true);
-                        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED | UNIT_FLAG_UNK_29 | UNIT_FLAG_NOT_SELECTABLE);
+                        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     })
                     .Schedule(Seconds(6), [this](TaskContext /*context*/)
                     {
                         me->RemoveAurasDueToSpell(SPELL_PERMANENT_FEIGN_DEATH);
-                        me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED | UNIT_FLAG_UNK_29 | UNIT_FLAG_NOT_SELECTABLE);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                         me->SetReactState(REACT_AGGRESSIVE);
                         DoCastSelf(SPELL_SHROUD_OF_THE_OCCULT);
                         DoZoneInCombat(me);
@@ -942,6 +942,7 @@ private:
     bool _canShatter;
 };
 
+// 70842 - Mana Barrier
 class spell_deathwhisper_mana_barrier : public AuraScript
 {
     PrepareAuraScript(spell_deathwhisper_mana_barrier);
@@ -963,6 +964,7 @@ class spell_deathwhisper_mana_barrier : public AuraScript
     }
 };
 
+// 71289 - Dominate Mind
 class spell_deathwhisper_dominated_mind : public AuraScript
 {
     PrepareAuraScript(spell_deathwhisper_dominated_mind);
@@ -984,6 +986,7 @@ class spell_deathwhisper_dominated_mind : public AuraScript
     }
 };
 
+// 72478 - Summon Spirits
 class spell_deathwhisper_summon_spirits : public SpellScript
 {
     PrepareSpellScript(spell_deathwhisper_summon_spirits);

@@ -964,6 +964,7 @@ enum JokkumScriptcast
     EVENT_KROLMIR_9                  = 24,
 };
 
+// 61319 - Jokkum Scriptcast
 class spell_jokkum_scriptcast : public SpellScriptLoader
 {
     public: spell_jokkum_scriptcast() : SpellScriptLoader("spell_jokkum_scriptcast") { }
@@ -995,6 +996,7 @@ class spell_jokkum_scriptcast : public SpellScriptLoader
         }
 };
 
+// 56650 - Player Cast Veranus Summon
 class spell_veranus_summon : public SpellScriptLoader
 {
     public: spell_veranus_summon() : SpellScriptLoader("spell_veranus_summon") { }
@@ -1031,6 +1033,7 @@ enum CloseRift
     SPELL_DESPAWN_RIFT          = 61665
 };
 
+// 56763 - Close Rift
 class spell_close_rift : public SpellScriptLoader
 {
     public:
@@ -1064,38 +1067,6 @@ class spell_close_rift : public SpellScriptLoader
         AuraScript* GetAuraScript() const override
         {
             return new spell_close_rift_AuraScript();
-        }
-};
-
-// 60603 - Eject Passenger 1
-class spell_eject_passenger_wild_wyrm : public SpellScriptLoader
-{
-    public:
-        spell_eject_passenger_wild_wyrm() : SpellScriptLoader("spell_eject_passenger_wild_wyrm") { }
-
-        class spell_eject_passenger_wild_wyrm_SpellScript : public SpellScript
-        {
-            PrepareSpellScript(spell_eject_passenger_wild_wyrm_SpellScript);
-
-            bool Validate(SpellInfo const* /*spellInfo*/) override
-            {
-                return ValidateSpellInfo({ SPELL_FIGHT_WYRM });
-            }
-
-            void HandleScript(SpellEffIndex /*effIndex*/)
-            {
-                GetHitUnit()->RemoveAurasDueToSpell(SPELL_FIGHT_WYRM);
-            }
-
-            void Register() override
-            {
-                OnEffectHitTarget += SpellEffectFn(spell_eject_passenger_wild_wyrm_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
-            }
-        };
-
-        SpellScript* GetSpellScript() const override
-        {
-            return new spell_eject_passenger_wild_wyrm_SpellScript();
         }
 };
 
@@ -1385,13 +1356,13 @@ class spell_falling_dragon_feign_death : public SpellScriptLoader
 
             void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                GetTarget()->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
+                GetTarget()->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PREVENT_EMOTES_FROM_CHAT_TEXT);
                 GetTarget()->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
             }
 
             void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                GetTarget()->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
+                GetTarget()->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PREVENT_EMOTES_FROM_CHAT_TEXT);
                 GetTarget()->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
             }
 
@@ -1480,7 +1451,6 @@ void AddSC_storm_peaks()
     new spell_jokkum_scriptcast();
     new spell_veranus_summon();
     new spell_close_rift();
-    new spell_eject_passenger_wild_wyrm();
     new spell_grip();
     new spell_grab_on();
     new spell_loosen_grip<5>("spell_thrust_spear");

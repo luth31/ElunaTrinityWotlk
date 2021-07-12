@@ -244,14 +244,15 @@ void SmartAI::EndPath(bool fail)
     if (fail)
         return;
 
-    GetScript()->ProcessEventsFor(SMART_EVENT_WAYPOINT_ENDED, nullptr, _currentWaypointNode, GetScript()->GetPathId());
+    uint32 pathid = GetScript()->GetPathId();
+    GetScript()->ProcessEventsFor(SMART_EVENT_WAYPOINT_ENDED, nullptr, _currentWaypointNode, pathid);
 
     if (_repeatWaypointPath)
     {
         if (IsAIControlled())
             StartPath(_run, GetScript()->GetPathId(), _repeatWaypointPath);
     }
-    else
+    else if (pathid == GetScript()->GetPathId()) // if it's not the same pathid, our script wants to start another path; don't override it
         GetScript()->SetPathId(0);
 
     if (_despawnState == 1)
@@ -669,7 +670,7 @@ void SmartAI::PassengerBoarded(Unit* who, int8 seatId, bool apply)
     GetScript()->ProcessEventsFor(apply ? SMART_EVENT_PASSENGER_BOARDED : SMART_EVENT_PASSENGER_REMOVED, who, uint32(seatId), 0, apply);
 }
 
-void SmartAI::OnCharmed(bool /*isNew*/)
+void SmartAI::OnCharmed(bool isNew)
 {
     bool const charmed = me->IsCharmed();
     if (charmed) // do this before we change charmed state, as charmed state might prevent these things from processing
@@ -703,6 +704,9 @@ void SmartAI::OnCharmed(bool /*isNew*/)
     }
 
     GetScript()->ProcessEventsFor(SMART_EVENT_CHARMED, nullptr, 0, 0, charmed);
+
+    if (!GetScript()->HasAnyEventWithFlag(SMART_EVENT_FLAG_WHILE_CHARMED)) // we can change AI if there are no events with this flag
+        UnitAI::OnCharmed(isNew);
 }
 
 void SmartAI::DoAction(int32 param)
